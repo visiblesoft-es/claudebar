@@ -1,12 +1,12 @@
 # claudebar
 
-A rich 4-line statusline for [Claude Code](https://claude.ai/code) that keeps your most relevant session information always visible: git context, model and context window usage, session rate limits, cache efficiency, compaction hints, and a full breakdown of tools, agents and skills used.
+A rich 4-line statusline for [Claude Code](https://claude.ai/code) that keeps your most relevant session information always visible: git context, model, reasoning-effort level, context window usage, session rate limits, cache efficiency, compaction hints, and a full breakdown of tools, agents and skills used.
 
 ## Preview
 
 ```
 my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓░░░░░░ 18%
+Sonnet 4.6  ⚙ high  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓░░░░░░ 18%
 ⏱ 22m 34s  cache ▓▓▓▓▓▓▓▓ 98%  edited +308 -66  Tools: Read×14  Edit×6  Bash×4
 Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 ```
@@ -15,7 +15,7 @@ When the context is getting full, the compaction indicator appears at the end of
 
 ```
 my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28%  7d ▓▓▓░░░░░ 38%  ⚡ /compact
+Sonnet 4.6  ⚙ high  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28%  7d ▓▓▓░░░░░ 38%  ⚡ /compact
 ⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389  Tools: Read×38  Edit×17  Bash×9
 Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 ```
@@ -28,8 +28,9 @@ Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 - `last: <message>` — subject of the last commit, truncated to 50 characters
 - `[worktree: name]` — displayed when running inside a git worktree
 
-### Line 2 — Model, context window & compaction hint
+### Line 2 — Model, effort, context window & compaction hint
 - **Model name** in use
+- **⚙ Effort level** — Claude Code's reasoning-effort setting (`effortLevel` in `settings.json`). Color-coded by intensity: `low` (green), `medium` (cyan), `high` (yellow), `max` (red). Read with Claude Code's precedence order: project-local → project → user settings. Omitted silently when unset.
 - **Context bar** `▓▓░░░░░░` with percentage and token breakdown:
   - `←Nkt` total input tokens (new + cache creation + cache reads)
   - `→Nkt` cumulative output tokens for the session

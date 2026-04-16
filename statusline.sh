@@ -120,6 +120,35 @@ if [ -n "$worktree_label" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Effort level — Claude Code reasoning-effort setting.
+# Not exposed via stdin JSON, so it's read directly from settings.json files
+# in Claude Code's precedence order: project-local > project > user.
+# Omitted silently when no setting defines it.
+# ---------------------------------------------------------------------------
+effort_level=""
+for _s in "${cwd}/.claude/settings.local.json" "${cwd}/.claude/settings.json" "$HOME/.claude/settings.json"; do
+  if [ -f "$_s" ]; then
+    _v=$(jq -r '.effortLevel // empty' "$_s" 2>/dev/null)
+    if [ -n "$_v" ]; then
+      effort_level="$_v"
+      break
+    fi
+  fi
+done
+
+effort_str=""
+if [ -n "$effort_level" ]; then
+  case "$effort_level" in
+    low)         effort_color="\033[32m" ;;   # green
+    medium)      effort_color="\033[36m" ;;   # cyan
+    high)        effort_color="\033[33m" ;;   # yellow
+    max|maximum) effort_color="\033[31m" ;;   # red
+    *)           effort_color="\033[90m" ;;   # gray — unknown value
+  esac
+  effort_str=$(printf "  \033[90m⚙\033[0m ${effort_color}%s\033[0m" "$effort_level")
+fi
+
+# ---------------------------------------------------------------------------
 # Context window
 # ---------------------------------------------------------------------------
 ctx_used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
@@ -408,13 +437,13 @@ fi
 # ---------------------------------------------------------------------------
 # Assemble final output:
 #   Line 1: dir (branch  mod:N  ahead:N  +N -N)  last commit msg  [worktree: x]
-#   Line 2: model  ctx [bar] pct% ←in →out  [5h bar]  [7d bar]  [compact indicator]
+#   Line 2: model  [⚙ effort]  ctx [bar] pct% ←in →out  [5h bar]  [7d bar]  [compact indicator]
 #   Line 3: ⏱ duration  cache [bar] pct%  edited +N -N
 #   Line 4: Tools: ...  (omitted when transcript absent / no tool calls)
 #   Line 5: Agents: ...  Skills: ...  (omitted when both empty)
 # ---------------------------------------------------------------------------
-printf "%s\n\033[35m%s\033[0m  %s%s%s%s" \
-  "$location_str" "$model" "$ctx_block" "$five_str" "$week_str" "$compact_str"
+printf "%s\n\033[35m%s\033[0m%s  %s%s%s%s" \
+  "$location_str" "$model" "$effort_str" "$ctx_block" "$five_str" "$week_str" "$compact_str"
 
 if [ -n "$session_stats_str" ]; then
   printf "\n%s" "$session_stats_str"
