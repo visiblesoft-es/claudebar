@@ -392,13 +392,17 @@ if [ "$dur_min" -ge 90 ] 2>/dev/null; then
   compact_score=$(( compact_score + 1 ))
 fi
 
-# Render indicator
-if [ "$compact_score" -ge 4 ]; then
-  compact_str=$(printf "  \033[31;1m⚠ COMPACT\033[0m")
-elif [ "$compact_score" -ge 2 ]; then
-  compact_str=$(printf "  \033[33m⚡ /compact\033[0m")
-elif [ "$compact_score" -ge 1 ]; then
-  compact_str=$(printf "  \033[90m✦ compact?\033[0m")
+# Render indicator — gated on primary context signal: if ctx is low
+# (e.g. fresh session or just-compacted), secondary factors like long
+# duration or cache churn shouldn't trigger the hint on their own.
+if [ "$ctx_pct_int" -ge 30 ] 2>/dev/null; then
+  if [ "$compact_score" -ge 4 ]; then
+    compact_str=$(printf "  \033[31;1m⚠ COMPACT\033[0m")
+  elif [ "$compact_score" -ge 2 ]; then
+    compact_str=$(printf "  \033[33m⚡ /compact\033[0m")
+  elif [ "$compact_score" -ge 1 ]; then
+    compact_str=$(printf "  \033[90m✦ compact?\033[0m")
+  fi
 fi
 
 # ---------------------------------------------------------------------------
