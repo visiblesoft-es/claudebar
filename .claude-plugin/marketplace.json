@@ -1,0 +1,20 @@
+{
+  "name": "claudebar",
+  "owner": {
+    "name": "Jose L. Garcia",
+    "email": "jlgarcia@visiblesoft.com"
+  },
+  "metadata": {
+    "description": "A rich 4-line statusline for Claude Code with git context, session metrics, cache efficiency, compaction hints, tools, agents and skills",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "claudebar",
+      "source": "./",
+      "description": "A 4-line statusline for Claude Code. Line 1: git branch with dirty state, ahead commits, insertions/deletions and last commit. Line 2: model, context bar with in/out tokens, session rate limits with countdown, and a compaction indicator. Line 3: session duration, cache hit rate, lines edited by Claude, and tool usage. Line 4: agents and skills used in the session.",
+      "category": "monitoring",
+      "tags": ["hud", "statusline", "git", "monitoring", "context", "tools", "agents", "skills"]
+    }
+  ]
+}
