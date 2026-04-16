@@ -5,10 +5,19 @@ A rich 4-line statusline for [Claude Code](https://claude.ai/code) that keeps yo
 ## Preview
 
 ```
-Power.Time (master  mod:3  ahead:2  +47 -12)  last: feat(auth): refresh token hardening
-Sonnet 4.6  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓▓░░░░░ 38% (2d 14h)  ✦ compact?
+my-app (feature/auth  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
+Sonnet 4.6  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓▓░░░░░ 38% (2d 14h)
 ⏱ 22m 34s  cache ▓▓▓▓▓▓▓▓ 98%  edited +308 -66  Tools: Read×14  Edit×6  Bash×4  Grep×2
-Agents: statusline-setup×6  Skills: commit  frontend-design
+Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
+```
+
+And when the context is getting full, the compaction indicator appears on line 2:
+
+```
+my-app (feature/auth  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
+Sonnet 4.6  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28% (3h 41m)  7d ▓▓▓░░░░░ 38% (2d 14h)  ⚡ /compact
+⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389  Tools: Read×38  Grep×21  Edit×17  Bash×9
+Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 ```
 
 ### Line 1 — Git context
@@ -19,21 +28,26 @@ Agents: statusline-setup×6  Skills: commit  frontend-design
 - `last: <message>` — subject of the last commit, truncated to 50 characters
 - `[worktree: name]` — displayed when running inside a git worktree
 
-### Line 2 — Model & context window
+### Line 2 — Model, context window & compaction hint
 - **Model name** in use
 - **Context bar** `▓▓░░░░░░` with percentage and token breakdown:
   - `←Nkt` total input tokens (new + cache creation + cache reads)
   - `→Nkt` cumulative output tokens for the session
 - **5h rate limit bar** with percentage and countdown until reset
 - **7d rate limit bar** with percentage and countdown until reset
-- **Compaction hint** — a composite signal based on context usage %, cache efficiency and session length:
-  - `✦ compact?` (gray) — worth considering
-  - `⚡ /compact` (yellow) — recommended
-  - `⚠ COMPACT` (red, bold) — act soon
+- **Compaction hint** — a composite signal that watches three factors and tells you when to run `/compact`:
+
+| Indicator | Meaning | When it appears |
+|-----------|---------|-----------------|
+| `✦ compact?` | Worth considering | Context >50%, or session >90 min |
+| `⚡ /compact` | Recommended | Context >70%, or cache hit rate dropping |
+| `⚠ COMPACT` | Act soon | Context >85% — approaching auto-compact |
+
+  The score is computed from: context window usage (primary), cache hit rate degradation (a dropping rate means new context is accumulating fast), and session duration. Silent when the session is healthy.
 
 ### Line 3 — Session stats & tools
 - **⏱ Duration** — wall time elapsed since the session started
-- **Cache hit rate bar** — how efficiently the prompt cache is being used (green ≥80%, yellow ≥50%, red <50%)
+- **Cache hit rate bar** — how efficiently the prompt cache is being used (green ≥80%, yellow ≥50%, red <50%). A low rate means the model is processing large amounts of new context on every turn.
 - **edited +N -N** — lines added and removed by Claude across the entire session
 - **Tools** — top 10 most-used tool names with call counts, sorted descending
 
