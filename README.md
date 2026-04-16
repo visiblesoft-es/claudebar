@@ -5,18 +5,18 @@ A rich 4-line statusline for [Claude Code](https://claude.ai/code) that keeps yo
 ## Preview
 
 ```
-my-app (feature/auth  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓▓░░░░░ 38% (2d 14h)
-⏱ 22m 34s  cache ▓▓▓▓▓▓▓▓ 98%  edited +308 -66  Tools: Read×14  Edit×6  Bash×4  Grep×2
+my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
+Sonnet 4.6  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓░░░░░░ 18%
+⏱ 22m 34s  cache ▓▓▓▓▓▓▓▓ 98%  edited +308 -66  Tools: Read×14  Edit×6  Bash×4
 Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 ```
 
-And when the context is getting full, the compaction indicator appears on line 2:
+When the context is getting full, the compaction indicator appears at the end of line 2:
 
 ```
-my-app (feature/auth  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28% (3h 41m)  7d ▓▓▓░░░░░ 38% (2d 14h)  ⚡ /compact
-⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389  Tools: Read×38  Grep×21  Edit×17  Bash×9
+my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
+Sonnet 4.6  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28%  7d ▓▓▓░░░░░ 38%  ⚡ /compact
+⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389  Tools: Read×38  Edit×17  Bash×9
 Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
 ```
 
