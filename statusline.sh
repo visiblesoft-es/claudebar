@@ -405,25 +405,26 @@ fi
 # Assemble final output:
 #   Line 1: dir (branch  mod:N  ahead:N  +N -N)  last commit msg  [worktree: x]
 #   Line 2: model  ctx [bar] pct% ←in →out  [5h bar]  [7d bar]  [compact indicator]
-#   Line 3: ⏱ duration  cache [bar] pct%  edited +N -N  Tools: ...
-#   Line 4: Agents: ...  Skills: ...  (omitted when both empty)
+#   Line 3: ⏱ duration  cache [bar] pct%  edited +N -N
+#   Line 4: Tools: ...  (omitted when transcript absent / no tool calls)
+#   Line 5: Agents: ...  Skills: ...  (omitted when both empty)
 # ---------------------------------------------------------------------------
 printf "%s\n\033[35m%s\033[0m  %s%s%s%s" \
   "$location_str" "$model" "$ctx_block" "$five_str" "$week_str" "$compact_str"
 
-third_line=""
-[ -n "$session_stats_str" ] && third_line="${session_stats_str}  "
-[ -n "$tools_str" ]         && third_line="${third_line}${tools_str}"
-third_line="${third_line%  }"
-if [ -n "$third_line" ]; then
-  printf "\n%s" "$third_line"
+if [ -n "$session_stats_str" ]; then
+  printf "\n%s" "$session_stats_str"
 fi
 
-fourth_line=""
-[ -n "$agents_str" ] && fourth_line="${fourth_line}${agents_str}  "
-[ -n "$skills_str" ] && fourth_line="${fourth_line}${skills_str}"
-fourth_line="${fourth_line%  }"
+if [ -n "$tools_str" ]; then
+  printf "\n%s" "$tools_str"
+fi
 
-if [ -n "$fourth_line" ]; then
-  printf "\n%s" "$fourth_line"
+fifth_line=""
+[ -n "$agents_str" ] && fifth_line="${fifth_line}${agents_str}  "
+[ -n "$skills_str" ] && fifth_line="${fifth_line}${skills_str}"
+fifth_line="${fifth_line%  }"
+
+if [ -n "$fifth_line" ]; then
+  printf "\n%s" "$fifth_line"
 fi

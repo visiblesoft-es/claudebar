@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-claudebar is a Claude Code plugin that renders a 4-line statusline. The entire runtime is a single bash script (`statusline.sh`) that Claude Code invokes on every turn, piping a session-state JSON document into it on stdin. There is no build step, no tests, no language runtime — just bash + `git` + `jq`.
+claudebar is a Claude Code plugin that renders a 5-line statusline. The entire runtime is a single bash script (`statusline.sh`) that Claude Code invokes on every turn, piping a session-state JSON document into it on stdin. There is no build step, no tests, no language runtime — just bash + `git` + `jq`.
 
 ## Repository shape
 
@@ -31,8 +31,9 @@ The script is a pure stdin→stdout filter. Understand these inputs/outputs befo
 **Output layout** (each line is optional — entire lines are suppressed when empty):
 1. Directory + git branch + dirty/ahead counts + insertions/deletions + last commit subject + optional worktree tag
 2. Model + context bar + in/out tokens + 5h/7d rate-limit bars with countdowns + compaction hint
-3. Duration + cache hit-rate bar + lines edited + top-10 tool counts
-4. Agents (by subagent_type) + unique skills invoked
+3. Duration + cache hit-rate bar + lines edited
+4. Top-10 tool counts (split onto its own line because it can grow wide)
+5. Agents (by subagent_type) + unique skills invoked
 
 ## Non-obvious conventions
 
@@ -67,5 +68,5 @@ End users run `claude plugin install github:visiblesoft-es/claudebar`, which cac
 ## When editing
 
 - Preserve graceful degradation — every JSON field read through `jq` uses `// empty` or `// 0` so missing data never crashes the script.
-- Keep line counts bounded: lines 3 and 4 can grow unboundedly if the transcript has many distinct tools/agents. The `Tools:` list is capped at 10 via `head -10`; keep a similar cap if adding new enumerations.
+- Keep line counts bounded: lines 4 and 5 can grow unboundedly if the transcript has many distinct tools/agents. The `Tools:` list is capped at 10 via `head -10`; keep a similar cap if adding new enumerations.
 - When adding a new rate-limit or metric, mirror the existing `five_pct`/`week_pct` pattern: parse → color-pick → build bar → format countdown → append to the line only if the percentage field was present.
