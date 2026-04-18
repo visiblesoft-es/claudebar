@@ -121,30 +121,69 @@ fi
 
 # ---------------------------------------------------------------------------
 # Effort level — Claude Code reasoning-effort setting.
-# Not exposed via stdin JSON, so it's read directly from settings.json files
-# in Claude Code's precedence order: project-local > project > user.
-# Omitted silently when no setting defines it.
+# Not exposed via stdin JSON, so it's resolved from the same sources Claude
+# Code itself honors, in its precedence order:
+#   1. $CLAUDE_CODE_EFFORT_LEVEL env var (except the sentinels "unset"/"auto",
+#      which mean "defer to settings")
+#   2. `effortLevel` key in settings.json, searched project-local → project → user
+# Omitted silently when nothing defines it.
 # ---------------------------------------------------------------------------
 effort_level=""
-for _s in "${cwd}/.claude/settings.local.json" "${cwd}/.claude/settings.json" "$HOME/.claude/settings.json"; do
-  if [ -f "$_s" ]; then
-    _v=$(jq -r '.effortLevel // empty' "$_s" 2>/dev/null)
-    if [ -n "$_v" ]; then
-      effort_level="$_v"
-      break
-    fi
+if [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
+  _env_eff=$(echo "$CLAUDE_CODE_EFFORT_LEVEL" | tr '[:upper:]' '[:lower:]')
+  if [ "$_env_eff" != "unset" ] && [ "$_env_eff" != "auto" ]; then
+    effort_level="$_env_eff"
   fi
-done
+fi
+if [ -z "$effort_level" ]; then
+  for _s in "${cwd}/.claude/settings.local.json" "${cwd}/.claude/settings.json" "$HOME/.claude/settings.json"; do
+    if [ -f "$_s" ]; then
+      _v=$(jq -r '.effortLevel // empty' "$_s" 2>/dev/null)
+      if [ -n "$_v" ]; then
+        effort_level="$_v"
+        break
+      fi
+    fi
+  done
+fi
+
+# Valid effort levels are discovered dynamically from `claude --help` so new
+# levels introduced by future CLI versions are recognized without code changes.
+# The parsed list is cached and invalidated when the `claude` binary changes.
+# Falls back to the known-good hardcoded list when the CLI is unavailable.
+_effort_cache_file="/tmp/claudebar-effort-levels.cache"
+_claude_bin=$(command -v claude 2>/dev/null)
+valid_effort_levels=""
+if [ -n "$_claude_bin" ]; then
+  if [ ! -f "$_effort_cache_file" ] || [ "$_claude_bin" -nt "$_effort_cache_file" ]; then
+    claude --help 2>/dev/null \
+      | sed -n 's/.*--effort <level>.*(\([^)]*\)).*/\1/p' \
+      | tr ',' '\n' | tr -d ' ' > "$_effort_cache_file" 2>/dev/null
+  fi
+  valid_effort_levels=$(cat "$_effort_cache_file" 2>/dev/null)
+fi
+if [ -z "$valid_effort_levels" ]; then
+  valid_effort_levels=$'low\nmedium\nhigh\nxhigh\nmax'
+fi
 
 effort_str=""
 if [ -n "$effort_level" ]; then
-  case "$effort_level" in
-    low)         effort_color="\033[32m" ;;   # green
-    medium)      effort_color="\033[36m" ;;   # cyan
-    high)        effort_color="\033[33m" ;;   # yellow
-    max|maximum) effort_color="\033[31m" ;;   # red
-    *)           effort_color="\033[90m" ;;   # gray — unknown value
-  esac
+  level_count=$(echo "$valid_effort_levels" | wc -l | tr -d ' ')
+  level_pos=$(echo "$valid_effort_levels" | grep -nx -- "$effort_level" | head -1 | cut -d: -f1)
+  if [ -n "$level_pos" ] && [ "$level_count" -gt 1 ]; then
+    # Map ordinal position to a traffic-light-like gradient.
+    level_pct=$(( (level_pos - 1) * 100 / (level_count - 1) ))
+    if   [ "$level_pct" -lt 13 ]; then effort_color="\033[32m"   # green
+    elif [ "$level_pct" -lt 38 ]; then effort_color="\033[36m"   # cyan
+    elif [ "$level_pct" -lt 63 ]; then effort_color="\033[33m"   # yellow
+    elif [ "$level_pct" -lt 88 ]; then effort_color="\033[91m"   # bright red
+    else                                effort_color="\033[31m"  # red
+    fi
+  elif [ -n "$level_pos" ]; then
+    effort_color="\033[32m"   # single-item list
+  else
+    effort_color="\033[90m"   # gray — not a recognized level
+  fi
   effort_str=$(printf "  \033[90m⚙\033[0m ${effort_color}%s\033[0m" "$effort_level")
 fi
 
