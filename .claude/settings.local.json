@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp ~/.claude/statusline-command.sh ~/.claude/statusline-command.sh.bak)",
+      "Read(//Users/jlgarcia/.claude/**)",
+      "Bash(bash /Users/jlgarcia/Development/Repositories/VisibleSoft/claudebar/statusline.sh)",
+      "Bash(rm -rf /tmp/effort-test)",
+      "Bash(cp ~/.claude.json /tmp/claude-json-before.json)",
+      "Read(//Users/jlgarcia/**)"
+    ]
+  }
+}
