@@ -268,7 +268,9 @@ format_reset_time() {
 five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 five_str=""
 if [ -n "$five_pct" ]; then
-  five_int=$(printf "%.0f" "$five_pct")
+  # macOS /bin/bash 3.2 `printf "%.0f"` rejects values like "28.000000000000004";
+  # awk handles them cleanly across platforms.
+  five_int=$(awk -v v="$five_pct" 'BEGIN{printf "%.0f", v}')
   if [ "$five_int" -ge 90 ] 2>/dev/null; then
     five_color="\033[31m"
   elif [ "$five_int" -ge 70 ] 2>/dev/null; then
@@ -292,7 +294,7 @@ fi
 week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 week_str=""
 if [ -n "$week_pct" ]; then
-  week_int=$(printf "%.0f" "$week_pct")
+  week_int=$(awk -v v="$week_pct" 'BEGIN{printf "%.0f", v}')
   if [ "$week_int" -ge 90 ] 2>/dev/null; then
     week_color="\033[31m"
   elif [ "$week_int" -ge 70 ] 2>/dev/null; then
