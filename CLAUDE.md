@@ -30,10 +30,13 @@ The script is a pure stdin→stdout filter. Understand these inputs/outputs befo
 
 **Output layout** (each line is optional — entire lines are suppressed when empty):
 1. Directory + git branch + dirty/ahead counts + insertions/deletions + last commit subject + optional worktree tag
-2. Model + reasoning-effort badge + context bar + in/out tokens + 5h/7d rate-limit bars with countdowns + compaction hint
-3. Duration + cache hit-rate bar + lines edited
-4. Top-10 tool counts (split onto its own line because it can grow wide)
-5. Agents (by subagent_type) + unique skills invoked
+2. Model + reasoning-effort badge + context bar + in/out tokens + compaction hint
+3. 5h + 7d rate-limit bars with countdowns (suppressed when no Claude.ai subscription data is present)
+4. Duration + cache hit-rate bar + lines edited
+5. Top-10 tool counts (split onto its own line because it can grow wide)
+6. Agents (by subagent_type) + unique skills invoked
+
+Rate-limit bars live on their own line because Ink's statusline renderer truncates long lines by wrapping them to a second terminal row — and that overflow silently eats the lines that would have come after. Keeping each line short-ish (<80 visible cols) is a hard requirement for the whole stack to show up.
 
 ## Non-obvious conventions
 

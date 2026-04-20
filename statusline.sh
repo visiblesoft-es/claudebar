@@ -478,13 +478,27 @@ fi
 # ---------------------------------------------------------------------------
 # Assemble final output:
 #   Line 1: dir (branch  mod:N  ahead:N  +N -N)  last commit msg  [worktree: x]
-#   Line 2: model  [⚙ effort]  ctx [bar] pct% ←in →out  [5h bar]  [7d bar]  [compact indicator]
-#   Line 3: ⏱ duration  cache [bar] pct%  edited +N -N
-#   Line 4: Tools: ...  (omitted when transcript absent / no tool calls)
-#   Line 5: Agents: ...  Skills: ...  (omitted when both empty)
+#   Line 2: model  [⚙ effort]  ctx [bar] pct% ←in →out  [compact indicator]
+#   Line 3: 5h [bar] pct% (…)  7d [bar] pct% (…)   (omitted when no rate-limit data)
+#   Line 4: ⏱ duration  cache [bar] pct%  edited +N -N
+#   Line 5: Tools: ...                               (omitted when no tool calls)
+#   Line 6: Agents: ...  Skills: ...                 (omitted when both empty)
+#
+# Rate limits live on their own line because concatenating them into line 2
+# often pushes it past the terminal width (~80 cols). Ink's statusline
+# renderer wraps overflow across terminal rows, which silently eats the
+# following output lines — so we'd lose Tools/Agents/Skills entirely.
 # ---------------------------------------------------------------------------
-printf "%s\n\033[35m%s\033[0m%s  %s%s%s%s" \
-  "$location_str" "$model" "$effort_str" "$ctx_block" "$five_str" "$week_str" "$compact_str"
+printf "%s\n\033[35m%s\033[0m%s  %s%s" \
+  "$location_str" "$model" "$effort_str" "$ctx_block" "$compact_str"
+
+# Rate limits — strip the leading "  " spacer from five_str so the joined line
+# doesn't start with indentation.
+if [ -n "$five_str" ] || [ -n "$week_str" ]; then
+  limits_line="${five_str}${week_str}"
+  limits_line="${limits_line#  }"
+  printf "\n%s" "$limits_line"
+fi
 
 if [ -n "$session_stats_str" ]; then
   printf "\n%s" "$session_stats_str"
@@ -494,11 +508,11 @@ if [ -n "$tools_str" ]; then
   printf "\n%s" "$tools_str"
 fi
 
-fifth_line=""
-[ -n "$agents_str" ] && fifth_line="${fifth_line}${agents_str}  "
-[ -n "$skills_str" ] && fifth_line="${fifth_line}${skills_str}"
-fifth_line="${fifth_line%  }"
+last_line=""
+[ -n "$agents_str" ] && last_line="${last_line}${agents_str}  "
+[ -n "$skills_str" ] && last_line="${last_line}${skills_str}"
+last_line="${last_line%  }"
 
-if [ -n "$fifth_line" ]; then
-  printf "\n%s" "$fifth_line"
+if [ -n "$last_line" ]; then
+  printf "\n%s" "$last_line"
 fi
