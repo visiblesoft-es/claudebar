@@ -5,6 +5,21 @@ input=$(cat)
 echo "$input" > /tmp/statusline-debug.json
 
 # ---------------------------------------------------------------------------
+# Helper: visible width of a string in characters (not bytes).
+# Strips ANSI SGR escape sequences and counts code points, so the result
+# matches what the terminal renders. Used to keep line 1 under the panel
+# width — Ink's statusline renderer wraps overlong lines onto a second
+# terminal row and silently eats whatever should have come after, so any
+# line that risks overflow has to budget itself.
+# ---------------------------------------------------------------------------
+visible_len() {
+  local s=$1
+  local stripped
+  stripped=$(printf '%s' "$s" | sed $'s/\x1b\\[[0-9;]*m//g')
+  printf '%s' "$stripped" | LC_ALL=en_US.UTF-8 wc -m | tr -d '[:space:]'
+}
+
+# ---------------------------------------------------------------------------
 # Helper: build a compact progress bar (8 filled chars wide)
 # Usage: make_bar <integer_percentage> <color_escape>
 # ---------------------------------------------------------------------------
@@ -92,18 +107,11 @@ fi
 location_str=$(printf "\033[36m%s\033[0m" "$dir_name")
 if [ -n "$git_branch" ]; then
   location_str="${location_str} $(printf "${branch_color}(%s%s\033[0m%s%s${branch_color})\033[0m" "$git_branch" "$branch_extra" "$git_ins" "$git_del")"
-
-  # Last commit message — truncated to 50 chars, dim/gray, omitted when not in a git repo
-  last_commit=$(git -C "$cwd" log -1 --pretty=format:"%s" 2>/dev/null)
-  if [ -n "$last_commit" ]; then
-    if [ ${#last_commit} -gt 50 ]; then
-      last_commit="${last_commit:0:50}…"
-    fi
-    location_str="${location_str}  $(printf "\033[90mlast:\033[0m \033[2;37m%s\033[0m" "$last_commit")"
-  fi
 fi
 
-# Worktree indicator — shown when Claude Code is running inside a git worktree
+# Worktree indicator — shown when Claude Code is running inside a git worktree.
+# Built before the commit message so the commit message can budget around it.
+worktree_str=""
 worktree_label=$(echo "$input" | jq -r '
   .workspace.git_worktree //
   .worktree.branch //
@@ -116,8 +124,36 @@ if [ -n "$worktree_label" ]; then
   if [[ "$worktree_label" == */* ]]; then
     worktree_label=$(basename "$worktree_label")
   fi
-  location_str="${location_str}  $(printf "\033[36m[worktree: %s]\033[0m" "$worktree_label")"
+  worktree_str="  $(printf "\033[36m[worktree: %s]\033[0m" "$worktree_label")"
 fi
+
+# Last commit message — width-aware: shrinks (or is dropped) so line 1 stays
+# under LINE1_BUDGET visible cols. Without this, dir + dirty/ahead counters +
+# ins/del + a 50-char subject can push line 1 past 80 cols, which makes Ink
+# wrap it and silently eat lines 2+ (model/ctx, rate limits, stats, tools).
+# 79 is conservative for an 80-col panel; the cap stays at 50 when there's
+# room so existing layouts are unchanged.
+LINE1_BUDGET=79
+LAST_PREFIX="  last: "
+LAST_MAX=50
+commit_str=""
+if [ -n "$git_branch" ]; then
+  last_commit=$(git -C "$cwd" log -1 --pretty=format:"%s" 2>/dev/null)
+  if [ -n "$last_commit" ]; then
+    base_len=$(visible_len "$location_str")
+    wt_len=$(visible_len "$worktree_str")
+    available=$(( LINE1_BUDGET - base_len - wt_len - ${#LAST_PREFIX} ))
+    [ "$available" -gt "$LAST_MAX" ] && available=$LAST_MAX
+    if [ "$available" -ge 15 ]; then
+      if [ ${#last_commit} -gt "$available" ]; then
+        last_commit="${last_commit:0:$((available - 1))}…"
+      fi
+      commit_str="  $(printf "\033[90mlast:\033[0m \033[2;37m%s\033[0m" "$last_commit")"
+    fi
+  fi
+fi
+
+location_str="${location_str}${commit_str}${worktree_str}"
 
 # ---------------------------------------------------------------------------
 # Effort level — Claude Code reasoning-effort setting.
