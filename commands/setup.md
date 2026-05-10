@@ -5,13 +5,11 @@ allowed-tools: Bash, Read, Edit
 
 ## Step 1: Locate the plugin
 
-Find the installed plugin directory:
+Find the installed plugin directory (highest installed version):
 
 ```bash
-ls -d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null \
-  | awk -F/ '{ print $(NF-1) "\t" $0 }' \
-  | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n \
-  | tail -1 | cut -f2-
+ls -1d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null \
+  | sort -V | tail -1
 ```
 
 If empty, the plugin is not installed. Ask the user to install it first:
@@ -22,10 +20,7 @@ claude plugin install claudebar
 ## Step 2: Make the script executable
 
 ```bash
-plugin_dir=$(ls -d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null \
-  | awk -F/ '{ print $(NF-1) "\t" $0 }' \
-  | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n \
-  | tail -1 | cut -f2-)
+plugin_dir=$(ls -1d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null | sort -V | tail -1)
 chmod +x "${plugin_dir}statusline.sh"
 ```
 
@@ -34,10 +29,7 @@ chmod +x "${plugin_dir}statusline.sh"
 Run a quick smoke-test to confirm it produces output:
 
 ```bash
-plugin_dir=$(ls -d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null \
-  | awk -F/ '{ print $(NF-1) "\t" $0 }' \
-  | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n \
-  | tail -1 | cut -f2-)
+plugin_dir=$(ls -1d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null | sort -V | tail -1)
 echo '{"model":{"display_name":"Sonnet 4.6"},"context_window":{"used_percentage":10,"context_window_size":200000,"current_usage":{"input_tokens":1,"output_tokens":10,"cache_creation_input_tokens":0,"cache_read_input_tokens":5000},"total_output_tokens":500},"cwd":"/tmp","workspace":{"current_dir":"/tmp"},"cost":{"total_duration_ms":60000,"total_lines_added":5,"total_lines_removed":1},"rate_limits":{"five_hour":{"used_percentage":5,"resets_at":9999999999},"seven_day":{"used_percentage":10,"resets_at":9999999999}}}' \
   | bash "${plugin_dir}statusline.sh"
 ```
@@ -48,9 +40,9 @@ If it errors or produces no output, do not proceed to Step 4. Report the error.
 
 Build the statusLine command and merge it into `settings.json`. Do NOT overwrite existing settings — merge only the `statusLine` key.
 
-The command to set:
+The command to set (re-resolves the latest installed version on every invocation, so plugin updates are picked up without re-running setup):
 ```
-bash -c 'plugin_dir=$(ls -d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null | awk -F/ '"'"'{ print $(NF-1) "\t" $0 }'"'"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec bash "${plugin_dir}statusline.sh"'
+bash -c 'plugin_dir=$(ls -1d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/plugins/cache/claudebar/claudebar/*/ 2>/dev/null | sort -V | tail -1); exec bash "${plugin_dir}statusline.sh"'
 ```
 
 Settings file: `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json`

@@ -67,7 +67,7 @@ To exercise the `Tools:`/`Agents:`/`Skills:` paths, inject a `transcript_path` p
 
 ## Distribution & installation flow
 
-End users run `claude plugin install github:visiblesoft-es/claudebar`, which caches the repo under `~/.claude/plugins/cache/claudebar/claudebar/<version>/`. Then `/claudebar:setup` (defined in `commands/setup.md`) resolves the newest version directory using a `sort -t.` numeric sort across semver components, and writes a `statusLine.command` to `settings.json` that re-runs the same lookup at invocation time — so plugin updates are picked up without re-running setup. When bumping version numbers, update `package.json`, `plugin.json`, and `marketplace.json` together.
+End users run `claude plugin install github:visiblesoft-es/claudebar`, which caches the repo under `~/.claude/plugins/cache/claudebar/claudebar/<version>/`. Then `/claudebar:setup` (defined in `commands/setup.md`) resolves the newest version directory with `ls -1d … | sort -V | tail -1`, and writes a `statusLine.command` to `settings.json` that re-runs the same lookup at invocation time — so plugin updates are picked up without re-running setup. `sort -V` is GNU/BSD version-sort; macOS BSD sort has supported it since 10.15. When bumping version numbers, update `package.json`, `plugin.json`, and `marketplace.json` together.
 
 ## When editing
 
