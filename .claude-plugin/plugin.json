@@ -1,6 +1,6 @@
 {
   "name": "claudebar",
-  "description": "A rich 4-line statusline for Claude Code with git context, session metrics, cache efficiency, compaction hints, tools, agents and skills",
+  "description": "A rich 6-line statusline for Claude Code with git context, model and reasoning effort, context window usage, rate limits, cache efficiency, compaction hints, and tool, agent and skill tracking",
   "version": "0.1.1",
   "author": {
     "name": "Jose L. Garcia",
@@ -12,5 +12,15 @@
   "homepage": "https://github.com/visiblesoft-es/claudebar",
   "repository": "https://github.com/visiblesoft-es/claudebar",
   "license": "MIT",
-  "keywords": ["hud", "statusline", "git", "monitoring", "context", "tools", "agents", "skills", "claude-code"]
+  "keywords": [
+    "hud",
+    "statusline",
+    "git",
+    "monitoring",
+    "context",
+    "tools",
+    "agents",
+    "skills",
+    "claude-code"
+  ]
 }

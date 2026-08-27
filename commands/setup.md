@@ -63,10 +63,12 @@ Tell the user:
 
 > ✅ claudebar installed. **Please restart Claude Code** — quit and run `claude` again.
 >
-> The statusline shows 4 lines:
+> The statusline shows up to 6 lines — each one is dropped when it has nothing to show:
 > - **Line 1** — git branch, dirty state, ahead commits, insertions/deletions, last commit message
-> - **Line 2** — model, context bar (←input →output), session rate limits with countdown, compaction hint
-> - **Line 3** — session duration, cache hit rate bar, lines edited by Claude, tool usage counts
-> - **Line 4** — agents used (grouped by type) and skills invoked
+> - **Line 2** — model, reasoning-effort badge, context bar (←input →output), compaction hint
+> - **Line 3** — 5h and 7d rate limits with countdowns (Claude.ai subscriptions only)
+> - **Line 4** — session duration, cache hit rate bar, lines edited by Claude
+> - **Line 5** — tool usage counts
+> - **Line 6** — agents used (grouped by type) and skills invoked
 >
 > Requirements: `bash`, `git`, `jq` must be available in PATH.

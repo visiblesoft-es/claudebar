@@ -1,60 +1,78 @@
 # claudebar
 
-A rich 4-line statusline for [Claude Code](https://claude.ai/code) that keeps your most relevant session information always visible: git context, model, reasoning-effort level, context window usage, session rate limits, cache efficiency, compaction hints, and a full breakdown of tools, agents and skills used.
+A rich 6-line statusline for [Claude Code](https://claude.ai/code) that keeps your most relevant session information always visible: git context, model, reasoning-effort level, context window usage, session rate limits, cache efficiency, compaction hints, and a full breakdown of tools, agents and skills used. Every line is dropped when it has nothing to show, so a fresh session starts compact and grows as the session does.
 
 ## Preview
 
 ```
-my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ⚙ high  ctx ▓▓░░░░░░ 25% ←51kt →27kt  5h ▓░░░░░░░ 4% (1h 23m)  7d ▓▓░░░░░░ 18%
-⏱ 22m 34s  cache ▓▓▓▓▓▓▓▓ 98%  edited +308 -66  Tools: Read×14  Edit×6  Bash×4
-Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
+my-app (main mod:3 ahead:2 +47 -12)  last: feat(auth): refresh token rotation
+Sonnet 4.6  ⚙ high  ctx ▓▓░░░░░░ 25% ←51kt →27kt
+5h ░░░░░░░░ 4% (1h 22m)  7d ▓░░░░░░░ 18% (4d 5h)
+⏱ 22m 34s  cache ▓▓▓▓▓▓▓░ 98%  edited +308 -66
+Tools: Read×14 Edit×6 Bash×4
+Agents: code-reviewer×2 Explore×1  Skills: commit feature-dev
 ```
 
 When the context is getting full, the compaction indicator appears at the end of line 2:
 
 ```
-my-app (main  mod:3  ahead:2  +47 -12)  last: feat(auth): add refresh token rotation
-Sonnet 4.6  ⚙ high  ctx ▓▓▓▓▓▓░░ 74% ←148kt →52kt  5h ▓▓░░░░░░ 28%  7d ▓▓▓░░░░░ 38%  ⚡ /compact
-⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389  Tools: Read×38  Edit×17  Bash×9
-Agents: code-reviewer×2  Explore×1  Skills: commit  feature-dev
+my-app (main mod:3 ahead:2 +47 -12)  last: feat(auth): refresh token rotation
+Sonnet 4.6  ⚙ high  ctx ▓▓▓▓▓░░░ 74% ←148kt →52kt  ⚡ /compact
+5h ▓▓░░░░░░ 28% (1h 56m)  7d ▓▓▓░░░░░ 38% (2d 23h)
+⏱ 1h 8m  cache ▓▓▓░░░░░ 42%  edited +1204 -389
+Tools: Read×38 Edit×17 Bash×9
+Agents: code-reviewer×2 Explore×1  Skills: commit feature-dev
 ```
 
 ### Line 1 — Git context
-- **Directory name** and **branch** — green when clean, yellow when there are uncommitted changes
-- `mod:N` — number of modified files (staged + unstaged)
-- `ahead:N` — commits not yet pushed to remote
+- **Directory name** and **branch** — green when clean, yellow when there are uncommitted changes or unpushed commits
+- `mod:N` — number of modified files (staged, unstaged and untracked)
+- `ahead:N` — commits not yet pushed to the upstream branch
 - `+N -N` — line insertions (green) / deletions (red) compared to HEAD
-- `last: <message>` — subject of the last commit, truncated to 50 characters
+- `last: <message>` — subject of the last commit, shortened (or dropped) to keep the line within the panel width
 - `[worktree: name]` — displayed when running inside a git worktree
 
 ### Line 2 — Model, effort, context window & compaction hint
 - **Model name** in use
-- **⚙ Effort level** — Claude Code's reasoning-effort setting (`effortLevel` in `settings.json`). Color-coded by intensity: `low` (green), `medium` (cyan), `high` (yellow), `max` (red). Read with Claude Code's precedence order: project-local → project → user settings. Omitted silently when unset.
+- **⚙ Effort level** — the reasoning effort of the running session, as reported by Claude Code itself, so it follows `/effort` and `--effort` live. Color-coded by position in the scale: `low` (green), `medium` (cyan), `high` (yellow), `xhigh` (bright red), `max` (red); an unrecognized value renders gray. Omitted silently when Claude Code reports none.
 - **Context bar** `▓▓░░░░░░` with percentage and token breakdown:
   - `←Nkt` total input tokens (new + cache creation + cache reads)
   - `→Nkt` cumulative output tokens for the session
-- **5h rate limit bar** with percentage and countdown until reset
-- **7d rate limit bar** with percentage and countdown until reset
-- **Compaction hint** — a composite signal that watches three factors and tells you when to run `/compact`:
+- **Compaction hint** — a composite signal that tells you when to run `/compact`. It scores three factors:
 
-| Indicator | Meaning | When it appears |
-|-----------|---------|-----------------|
-| `✦ compact?` | Worth considering | Context >50%, or session >90 min |
-| `⚡ /compact` | Recommended | Context >70%, or cache hit rate dropping |
-| `⚠ COMPACT` | Act soon | Context >85% — approaching auto-compact |
+| Factor | Points |
+|--------|--------|
+| Context ≥85% / ≥70% / ≥50% | +3 / +2 / +1 |
+| Cache hit rate below 60% | +1 |
+| Session longer than 90 minutes | +1 |
 
-  The score is computed from: context window usage (primary), cache hit rate degradation (a dropping rate means new context is accumulating fast), and session duration. Silent when the session is healthy.
+| Indicator | Meaning | Score |
+|-----------|---------|-------|
+| `✦ compact?` | Worth considering | 1 |
+| `⚡ /compact` | Recommended | 2–3 |
+| `⚠ COMPACT` | Act soon | 4+ |
 
-### Line 3 — Session stats & tools
+  The hint stays silent below 30% context, so a fresh or just-compacted session is never nagged by the secondary factors alone.
+
+### Line 3 — Rate limits
+- **5h bar** — usage of the rolling 5-hour limit, with a countdown to reset
+- **7d bar** — usage of the weekly limit, with a countdown to reset
+
+  Both come from your Claude.ai subscription; the whole line is omitted on API-key sessions. It sits on its own row on purpose: appended to line 2 it would overflow the panel width, and the overflow silently eats the lines below it.
+
+### Line 4 — Session stats
 - **⏱ Duration** — wall time elapsed since the session started
 - **Cache hit rate bar** — how efficiently the prompt cache is being used (green ≥80%, yellow ≥50%, red <50%). A low rate means the model is processing large amounts of new context on every turn.
 - **edited +N -N** — lines added and removed by Claude across the entire session
-- **Tools** — top 10 most-used tool names with call counts, sorted descending
 
-### Line 4 — Agents & skills
+### Line 5 — Tools
+- Top 10 most-used tool names with call counts, sorted descending. Read from the session transcript, and omitted when no tools have been called. `Agent`, `Task`, `Skill` and `ToolSearch` are counted on line 6 instead.
+
+### Line 6 — Agents & skills
 - **Agents** — subagent types launched during the session, with call counts (yellow)
-- **Skills** — unique skills invoked via the `Skill` tool (cyan). Only shown when skills have been used.
+- **Skills** — unique skills invoked via the `Skill` tool (cyan)
+
+  Omitted when neither has been used.
 
 ---
 
@@ -109,7 +127,7 @@ Quit Claude Code completely and launch it again:
 claude
 ```
 
-The 4-line statusline will now appear below the input field in every session.
+The statusline will now appear below the input field in every session.
 
 ---
 

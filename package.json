@@ -1,7 +1,7 @@
 {
   "name": "claudebar",
   "version": "0.1.1",
-  "description": "A rich 4-line statusline for Claude Code with git context, session metrics, cache efficiency, compaction hints, tools, agents and skills tracking",
+  "description": "A rich 6-line statusline for Claude Code with git context, model and reasoning effort, context window usage, rate limits, cache efficiency, compaction hints, and tool, agent and skill tracking",
   "files": [
     "statusline.sh",
     "commands/",

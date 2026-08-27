@@ -5,16 +5,25 @@
     "email": "jlgarcia@visiblesoft.com"
   },
   "metadata": {
-    "description": "A rich 4-line statusline for Claude Code with git context, session metrics, cache efficiency, compaction hints, tools, agents and skills",
+    "description": "A rich 6-line statusline for Claude Code with git context, model and reasoning effort, context window usage, rate limits, cache efficiency, compaction hints, and tool, agent and skill tracking",
     "version": "0.1.1"
   },
   "plugins": [
     {
       "name": "claudebar",
       "source": "./",
-      "description": "A 4-line statusline for Claude Code. Line 1: git branch with dirty state, ahead commits, insertions/deletions and last commit. Line 2: model, context bar with in/out tokens, session rate limits with countdown, and a compaction indicator. Line 3: session duration, cache hit rate, lines edited by Claude, and tool usage. Line 4: agents and skills used in the session.",
+      "description": "A 6-line statusline for Claude Code, each line dropped when its data is absent. Line 1: directory and git branch with dirty state, ahead commits, insertions/deletions and last commit. Line 2: model, reasoning-effort badge, context bar with in/out tokens and a compaction hint. Line 3: 5-hour and 7-day rate limits with countdowns. Line 4: session duration, cache hit rate and lines edited by Claude. Line 5: tool usage counts. Line 6: agents and skills used.",
       "category": "monitoring",
-      "tags": ["hud", "statusline", "git", "monitoring", "context", "tools", "agents", "skills"]
+      "tags": [
+        "hud",
+        "statusline",
+        "git",
+        "monitoring",
+        "context",
+        "tools",
+        "agents",
+        "skills"
+      ]
     }
   ]
 }

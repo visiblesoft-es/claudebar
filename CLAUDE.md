@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-claudebar is a Claude Code plugin that renders a 5-line statusline. The entire runtime is a single bash script (`statusline.sh`) that Claude Code invokes on every turn, piping a session-state JSON document into it on stdin. There is no build step, no tests, no language runtime — just bash + `git` + `jq`.
+claudebar is a Claude Code plugin that renders a statusline of up to 6 lines (each is suppressed when empty). The entire runtime is a single bash script (`statusline.sh`) that Claude Code invokes on every turn, piping a session-state JSON document into it on stdin. There is no build step, no tests, no language runtime — just bash + `git` + `jq`.
 
 ## Repository shape
 
-- `statusline.sh` — the one file that matters. Reads JSON from stdin, prints 4 ANSI-colored lines to stdout.
+- `statusline.sh` — the one file that matters. Reads JSON from stdin, prints up to 6 ANSI-colored lines to stdout.
 - `commands/setup.md` — the `/claudebar:setup` slash command users run after installing the plugin. It discovers the cached plugin path, `chmod +x` the script, smoke-tests it, and merges a `statusLine` entry into `~/.claude/settings.json`.
 - `.claude-plugin/plugin.json` + `marketplace.json` — plugin manifests consumed by `claude plugin install`.
 - `package.json` — distribution metadata only (no scripts, no dependencies).
