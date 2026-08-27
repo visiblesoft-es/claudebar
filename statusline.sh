@@ -157,15 +157,18 @@ location_str="${location_str}${commit_str}${worktree_str}"
 
 # ---------------------------------------------------------------------------
 # Effort level — Claude Code reasoning-effort setting.
-# Not exposed via stdin JSON, so it's resolved from the same sources Claude
-# Code itself honors, in its precedence order:
+# Claude Code ≥2.1.x resolves the session's effort itself and hands it over on
+# stdin as `.effort.level` — that is the only source that reflects `/effort`
+# and `--effort` for the *running* session, so it wins outright.
+# Older releases omit the field; for those we fall back to re-deriving it from
+# the sources Claude Code honored back then, in its precedence order:
 #   1. $CLAUDE_CODE_EFFORT_LEVEL env var (except the sentinels "unset"/"auto",
 #      which mean "defer to settings")
 #   2. `effortLevel` key in settings.json, searched project-local → project → user
 # Omitted silently when nothing defines it.
 # ---------------------------------------------------------------------------
-effort_level=""
-if [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
+effort_level=$(echo "$input" | jq -r '.effort.level // empty' 2>/dev/null)
+if [ -z "$effort_level" ] && [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
   _env_eff=$(echo "$CLAUDE_CODE_EFFORT_LEVEL" | tr '[:upper:]' '[:lower:]')
   if [ "$_env_eff" != "unset" ] && [ "$_env_eff" != "auto" ]; then
     effort_level="$_env_eff"
@@ -191,10 +194,15 @@ _effort_cache_file="/tmp/claudebar-effort-levels.cache"
 _claude_bin=$(command -v claude 2>/dev/null)
 valid_effort_levels=""
 if [ -n "$_claude_bin" ]; then
-  if [ ! -f "$_effort_cache_file" ] || [ "$_claude_bin" -nt "$_effort_cache_file" ]; then
+  if [ ! -s "$_effort_cache_file" ] || [ "$_claude_bin" -nt "$_effort_cache_file" ]; then
+    # The help text wraps, so the "(low, medium, …)" list usually lands on the
+    # line *after* the flag. Join the flag line with the next two before
+    # extracting, and keep only plausible level names so a stray parenthesis
+    # elsewhere in the help can never poison the list.
     claude --help 2>/dev/null \
-      | sed -n 's/.*--effort <level>.*(\([^)]*\)).*/\1/p' \
-      | tr ',' '\n' | tr -d ' ' > "$_effort_cache_file" 2>/dev/null
+      | grep -A2 -- '--effort <level>' | tr '\n' ' ' \
+      | sed -n 's/.*--effort <level>[^(]*(\([^)]*\)).*/\1/p' \
+      | tr ',' '\n' | tr -d ' ' | grep -E '^[a-z]+$' > "$_effort_cache_file" 2>/dev/null
   fi
   valid_effort_levels=$(cat "$_effort_cache_file" 2>/dev/null)
 fi

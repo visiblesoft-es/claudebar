@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "A rich 4-line statusline for Claude Code with git context, session metrics, cache efficiency, compaction hints, tools, agents and skills",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "plugins": [
     {
